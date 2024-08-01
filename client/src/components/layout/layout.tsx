@@ -4,6 +4,7 @@ import { FaBars } from "react-icons/fa";
 import { useStytchMemberSession, useStytchB2BClient } from "@stytch/react/b2b";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../../store/reducers";
+import { useLocation } from "react-router-dom";
 interface LayoutProps {
   children: React.ReactNode;
 }
@@ -15,6 +16,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const activeSection = useSelector(
     (state: RootState) => state.dashboardReducer.activeSection
   );
+  const location = useLocation();
 
   const stytchB2BClient = useStytchB2BClient();
   const handleLogout = async () => {
@@ -35,9 +37,19 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   return (
     <div style={{ maxWidth: "100%" }} className=" flex flex-col min-h-screen">
       {/* Header */}
-      <header className="border-b-[1px] bg-blue-500 text-white p-4 shadow-md ">
-        <div className="container mx-auto flex justify-between items-center">
-          <h1 className="text-2xl font-bold"> Pooja </h1>
+      <header className="border-b-[1px] bg-[#19303d] text-white p-4 shadow-md ">
+        <div className="px-10 mx-auto flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <img
+              className="w-10 h-10"
+              alt="Stytch_Logo.png"
+              src="Stytch_Logo.png"
+            />
+            <h1 className="text-2xl ml-2 text-[#fff] font-bold">
+              SAML Example
+            </h1>
+          </div>
+
           {session ? (
             <div
               onClick={handleLogout}
@@ -46,9 +58,13 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
               Logout
             </div>
           ) : (
-            <div className="hidden  md:flex space-x-4 font-bold">
-              <Link to="/">Home</Link>
-              <Link to="/signup">Sign Up</Link>
+            <div className="hidden text-[#fff] md:flex space-x-4 font-bold">
+              <Link
+                className="hover:underline"
+                to={location.pathname === "/signup" ? "/" : "/signup"}
+              >
+                {location.pathname === "/signup" ? "Sign In" : "Sign Up"}
+              </Link>
             </div>
           )}
 
@@ -97,9 +113,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       </main>
 
       {/* Footer */}
-      <footer className="bg-blue-500 text-white p-4 shadow-md">
+      <footer className="bg-[#19303d] text-white p-4 shadow-md">
         <div className="container mx-auto text-center">
-          <p>&copy; 2024 Pooja. All rights reserved.</p>
+          <p>&copy; 2024 SAML Example. All rights reserved.</p>
         </div>
       </footer>
     </div>

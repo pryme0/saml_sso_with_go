@@ -6,6 +6,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { axiosInstance } from "../utils";
 import { RootState } from "../store/reducers";
 import { useNavigate } from "react-router-dom";
+import { RoleSource } from "./interfaces";
 
 export const Dashboard: React.FC = () => {
   const { member } = useStytchMember();
@@ -28,7 +29,9 @@ export const Dashboard: React.FC = () => {
         type: "SET_MEMBER",
         payload: {
           ...response.data.data.member,
-          roles: member?.roles.map((role: any) => role.role_id),
+          roles: member?.roles.map(
+            (role: { role_id: string; sources: RoleSource[] }) => role.role_id
+          ),
         },
       });
 
@@ -70,7 +73,7 @@ export const Dashboard: React.FC = () => {
         activeSection={activeSection}
         setActiveSection={setActiveSection}
       />
-      <div className="flex w-full flex-grow p-6">
+      <div className="flex justify-center w-full flex-grow p-6">
         {activeSection === "Profile" && <Profile />}
         {activeSection === "Settings" && <Settings />}
       </div>

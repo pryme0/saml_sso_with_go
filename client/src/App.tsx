@@ -13,7 +13,7 @@ import { Provider } from "react-redux";
 import store from "./store/store";
 
 function App() {
-  const publicToken: any = process.env.REACT_APP_STYTCH_PUBLIC_TOKEN;
+  const publicToken = process.env.REACT_APP_STYTCH_PUBLIC_TOKEN as string;
   const stytch = new StytchB2BUIClient(publicToken);
 
   return (

@@ -8,8 +8,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 
-	routes "saml_sso/internal/controllers"
 	"saml_sso/internal/database"
+	routes "saml_sso/internal/routes"
 )
 
 const PORT = ":3002"

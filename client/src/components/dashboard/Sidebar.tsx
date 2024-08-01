@@ -7,8 +7,8 @@ export const Sidebar = ({
   activeSection,
   setActiveSection,
 }: {
-  activeSection: any;
-  setActiveSection: any;
+  activeSection: string;
+  setActiveSection: (state: string) => void;
 }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
@@ -17,7 +17,7 @@ export const Sidebar = ({
   };
   return (
     <div
-      className={`hidden md:flex flex-col h-screen ${
+      className={`hidden md:flex flex-col h-full ${
         isCollapsed ? "w-16" : "w-64"
       } bg-white shadow-lg ab`}
     >
@@ -36,7 +36,7 @@ export const Sidebar = ({
             <button
               className={`flex items-center px-4 py-3 w-full text-left ${
                 activeSection === "Profile"
-                  ? "bg-blue-500 text-white"
+                  ? "bg-[#19303d] text-white font-bold"
                   : "text-gray-700"
               }`}
               onClick={() => setActiveSection("Profile")}
@@ -49,7 +49,7 @@ export const Sidebar = ({
             <button
               className={`flex items-center px-4 py-3 w-full text-left ${
                 activeSection === "Settings"
-                  ? "bg-blue-500 text-white"
+                  ? "bg-[#19303d] text-white font-bold"
                   : "text-gray-700"
               }`}
               onClick={() => setActiveSection("Settings")}

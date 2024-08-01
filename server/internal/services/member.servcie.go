@@ -17,9 +17,27 @@ func GetUserProfile(c *gin.Context, db *gorm.DB) {
 
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
-			utils.NotFound(c, "Tenant not found")
+			utils.NotFound(c, "Member not found")
 		} else {
-			utils.InternalServerError(c, "Error retrieving tenant")
+			utils.InternalServerError(c, "Error retrieving member")
+		}
+		return
+	}
+
+	utils.OK(c, gin.H{"member": member})
+}
+
+// GetUserProfile retrieves a user's profile
+func GetMemberWithEmail(c *gin.Context, db *gorm.DB, email *string) {
+
+	var member models.Member
+	result := db.Preload("Tenant").First(&member, "email = ?", email)
+
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			utils.NotFound(c, "Member not found")
+		} else {
+			utils.InternalServerError(c, "Error retrieving member")
 		}
 		return
 	}

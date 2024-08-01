@@ -2,6 +2,7 @@ import React, { useCallback, useEffect } from "react";
 import { useStytchB2BClient, useStytchMemberSession } from "@stytch/react/b2b";
 import Spinner from "../components/common/Spinner";
 import { axiosInstance } from "../utils";
+import { toast } from "react-toastify";
 
 export const Authenticate = () => {
   const stytch = useStytchB2BClient();
@@ -13,11 +14,13 @@ export const Authenticate = () => {
         .get(
           `/authenticate?stytch_organization_id=${session.organization_id}&stytch_member_id=${session.member_id}`
         )
-        .then((data) => {
+        .then(() => {
           window.location.href = "http://localhost:3000/dashboard";
         })
         .catch((error) => {
-          console.log({ error });
+          toast.error(error.message || "Something went wrong", {
+            position: "bottom-right",
+          });
         });
     }
   }, [session]);
@@ -47,8 +50,16 @@ export const Authenticate = () => {
             });
           }
         }
-      } catch (error) {
-        console.log({ error });
+        //eslint-disable-next-line
+      } catch (error: any) {
+        toast.error(
+          error.message ||
+            "An error occurred while trying to authenticate your account",
+          {
+            position: "top-right",
+            autoClose: 3000, // Close after 3 seconds
+          }
+        );
       }
     }
   }, [session]);

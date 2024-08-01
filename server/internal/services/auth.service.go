@@ -21,7 +21,8 @@ import (
 
 type CreateTenantInput struct {
 	CompanyName string `json:"company_name"`
-	Name        string `json:"name"`
+	FirstName   string `json:"last_name"`
+	LastName    string `json:"first_name"`
 	Email       string `json:"email"`
 }
 
@@ -29,6 +30,11 @@ type UpdateSamlConnectionInput struct {
 	SigningCertificate string `json:"signing_certificate"`
 	IdpSignOnUrl       string `json:"idp_sign_on_url"`
 	IdpIssuerUrl       string `json:"idp_issuer_url"`
+}
+
+type SignInInputInput struct {
+	Email        string `json:"email"`
+	SignInMethod string `json:"sign_in_method"`
 }
 
 // Authenticate handles user authentication
@@ -73,9 +79,10 @@ func Authenticate(c *gin.Context, db *gorm.DB) {
 		}
 
 		member := &models.Member{
-			Name:     resp.Member.Name,
-			Email:    resp.Member.EmailAddress,
-			TenantID: tenant.ID,
+			FirstName: strings.Split(resp.Member.Name, " ")[0],
+			LastName:  strings.Split(resp.Member.Name, " ")[1],
+			Email:     resp.Member.EmailAddress,
+			TenantID:  tenant.ID,
 		}
 		db.Create(member)
 	}
@@ -129,9 +136,10 @@ func SignUp(c *gin.Context, db *gorm.DB) {
 	}
 
 	member := &models.Member{
-		Name:     createTenantInput.Name,
-		Email:    createTenantInput.Email,
-		TenantID: tenant.ID,
+		FirstName: createTenantInput.FirstName,
+		LastName:  createTenantInput.LastName,
+		Email:     createTenantInput.Email,
+		TenantID:  tenant.ID,
 	}
 
 	createdMember := db.Create(member)
@@ -292,4 +300,41 @@ func UpdateSamlConnection(c *gin.Context, db *gorm.DB) {
 	}
 
 	utils.OK(c, "SAML connection updated successfully")
+}
+
+// SignIn retrieves the Stytch organization ID by email
+func SignIn(c *gin.Context, db *gorm.DB) {
+
+	var signInInput SignInInputInput
+	if err := c.BindJSON(&signInInput); err != nil {
+		utils.BadRequest(c, "Invalid input data")
+		return
+	}
+
+	var member models.Member
+
+	memberExist := db.Preload("Tenant").First(&member, "email = ?", signInInput.Email)
+
+	if memberExist.Error != nil {
+		if memberExist.Error == gorm.ErrRecordNotFound {
+			utils.NotFound(c, "Member not found")
+		} else {
+			utils.InternalServerError(c, "Error retrieving member")
+		}
+		return
+	}
+	if signInInput.SignInMethod == "SAML" {
+		if member.Tenant.ID == 0 || member.Tenant.IdpIssuerUrl == "" {
+			utils.BadRequest(c, "This user does not have SAML provisioned")
+			return
+		}
+		utils.OK(c, gin.H{"connection_id": member.Tenant.ConnectionID})
+		return
+	} else if signInInput.SignInMethod == "MagicLink" {
+		utils.OK(c, gin.H{"organization_id": member.Tenant.StytchOrganizationId})
+
+	} else {
+		utils.BadRequest(c, "Invalid sign in method")
+	}
+
 }

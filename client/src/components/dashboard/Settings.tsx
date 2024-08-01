@@ -1,3 +1,5 @@
+import React from "react";
+
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useSelector } from "react-redux";
@@ -15,7 +17,7 @@ interface SAMLFormInputs {
 export const Settings = () => {
   const [loading, setLoading] = useState(false);
 
-  const [showForm, setShowForm] = useState(false);
+  const [showSAMLForm, setShowSAMLForm] = useState(false);
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -46,18 +48,19 @@ export const Settings = () => {
         data
       );
       setLoading(false);
-      setShowForm(false);
+      setShowSAMLForm(false);
       reset();
       toast.success("SAML Configuration updated successfully!", {
         position: "top-right",
         autoClose: 3000, // Close after 3 seconds
       });
-    } catch (error) {
-      console.log({ error });
+      //eslint-disable-next-line
+    } catch (error: any) {
       setLoading(false);
 
       toast.error(
-        "SAML Configuration Failed, please try again with the correct credentials",
+        error.message ||
+          "SAML Configuration Failed, please try again with the correct credentials",
         {
           position: "top-right",
           autoClose: 3000, // Close after 3 seconds
@@ -67,28 +70,31 @@ export const Settings = () => {
   };
 
   return (
-    <div className="flex  flex-col w-full md:w-1/2">
-      <h1 className="text-3xl font-bold mb-6">Settings</h1>
+    <div className="flex  flex-col w-full ">
+      <h1 className="text-3xl font-bold mb-6">
+        {showSAMLForm ? "SAML Configuration" : "Settings"}{" "}
+      </h1>
       <div className="bg-white p-6 shadow-md rounded-lg">
-        <h2 className="text-xl font-semibold mb-4">Account Settings</h2>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="flex items-center justify-center w-full bg-indigo-600 text-white py-2 px-4 rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-        >
-          Configure Saml
-        </button>
+        {!showSAMLForm && (
+          <button
+            onClick={() => setShowSAMLForm(!showSAMLForm)}
+            className="flex font-bold justify-center w-full bg-[#13e5c0] text-white py-2 px-4 rounded-md shadow-sm hover:bg-[#19303d] focus:outline-none focus:ring-2  focus:ring-offset-2"
+          >
+            Configure Saml
+          </button>
+        )}
 
-        {showForm && (
-          <div className="mt-6">
-            <div className="mt-16 mb-[100px]">
+        {showSAMLForm && (
+          <div className="mt-2">
+            <div className="mt-1 mb-[100px]">
               <h2 className="text-xl font-semibold mb-4">
-                Use the credentails below to setup SAML on your idp
+                Use the credentials below to setup SAML on your IdP
               </h2>
 
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700">
-                  Copy the ACS url below and paste it into your identity
-                  provider SAML configuration.
+                  Copy the ACS url below and paste it into your IdP SAML
+                  configuration
                 </label>
                 <div
                   className="mt-1 block w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm cursor-pointer"
@@ -103,7 +109,8 @@ export const Settings = () => {
 
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700">
-                  Copy the Audience url below and paste it into your identity
+                  Copy the Audience url below and paste it into your IdP SAML
+                  configuration
                 </label>
                 <div
                   className="mt-1 block w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm cursor-pointer"
@@ -117,8 +124,8 @@ export const Settings = () => {
             <form className="mt-6" onSubmit={handleSubmit(onSubmit)}>
               <div className="mb-4">
                 <h2 className="text-xl font-semibold mb-4">
-                  Input the credentials gotten from your identity provider to
-                  set up SAML on Pooja
+                  Input the credentials gotten from your IdP to set up SAML on
+                  SAML Example
                 </h2>
                 <label
                   htmlFor="idpIssuerUrl"
@@ -198,9 +205,16 @@ export const Settings = () => {
 
               <button
                 type="submit"
-                className="flex items-center justify-center w-full bg-blue-600 text-white py-2 px-4 rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                className="flex mb-5 font-bold justify-center w-full text-white py-2 px-4 rounded-md shadow-sm bg-[#19303d] focus:outline-none focus:ring-2  focus:ring-offset-2"
               >
                 {loading ? <Spinner /> : "Update SAML configuration"}
+              </button>
+
+              <button
+                onClick={() => setShowSAMLForm(!showSAMLForm)}
+                className="flex font-bold justify-center w-full bg-[#13e5c0] text-white py-2 px-4 rounded-md shadow-sm hover:bg-[#19303d] focus:outline-none focus:ring-2  focus:ring-offset-2"
+              >
+                {showSAMLForm ? "Cancel" : "Configure Saml"}
               </button>
             </form>
           </div>
