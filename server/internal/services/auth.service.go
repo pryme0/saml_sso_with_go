@@ -37,7 +37,7 @@ type SignInInputInput struct {
 	SignInMethod string `json:"sign_in_method"`
 }
 
-// Authenticate handles user authentication
+// Authenticate handles member authentication
 func Authenticate(c *gin.Context, db *gorm.DB) {
 	PROJECT_ID := os.Getenv("STYTCH_PROJECT_ID")
 	SECRET_KEY := os.Getenv("STYTCH_SECRET_KEY")
@@ -61,33 +61,49 @@ func Authenticate(c *gin.Context, db *gorm.DB) {
 	resultTenant := db.First(&tenant, "stytch_organization_id = ?", stytch_organization_id)
 
 	if resultTenant.Error != nil {
-		utils.BadRequest(c, "Tenant not found")
+		utils.BadRequest(c, "Organization not found")
 		return
 	}
 
 	resultMember := db.First(&member, "stytch_member_id = ?", stytch_member_id)
-
+	fmt.Println(resultMember)
 	if resultMember.Error != nil {
 
 		params := &members.GetParams{
-			MemberID: stytch_member_id,
+			MemberID:       stytch_member_id,
+			OrganizationID: stytch_organization_id,
 		}
+		fmt.Println(params)
 		resp, err := client.Organizations.Members.Get(context.Background(), params)
+
+		fmt.Println(err)
+
 		if err != nil {
 			utils.Unauthorized(c, err.Error())
 			return
 		}
 
-		member := &models.Member{
-			FirstName: strings.Split(resp.Member.Name, " ")[0],
-			LastName:  strings.Split(resp.Member.Name, " ")[1],
-			Email:     resp.Member.EmailAddress,
-			TenantID:  tenant.ID,
+		if resp.Member.Name == "" {
+			member := &models.Member{
+				Email:          resp.Member.EmailAddress,
+				TenantID:       tenant.ID,
+				StytchMemberID: resp.Member.MemberID,
+			}
+			db.Create(&member)
+		} else {
+			member := &models.Member{
+				FirstName:      strings.Split(resp.Member.Name, " ")[0],
+				LastName:       strings.Split(resp.Member.Name, " ")[1],
+				Email:          resp.Member.EmailAddress,
+				TenantID:       tenant.ID,
+				StytchMemberID: resp.Member.MemberID,
+			}
+			db.Create(member)
 		}
-		db.Create(member)
+
 	}
 
-	utils.Created(c, gin.H{"message": "User authenticated successfully"})
+	utils.Created(c, gin.H{"message": "Member authenticated successfully"})
 }
 
 func SignUp(c *gin.Context, db *gorm.DB) {
@@ -107,23 +123,29 @@ func SignUp(c *gin.Context, db *gorm.DB) {
 
 	CompanyName := createTenantInput.CompanyName
 
+	parts := strings.Split(createTenantInput.Email, "@")
+
+	allowedDomains := []string{parts[1]}
+
 	// Create a new tenant object
 	tenant := &models.Tenant{
 		CompanyName: createTenantInput.CompanyName,
+		Domain:      parts[1],
 	}
 
-	tenantExist := db.First(&tenant, "company_name = ?", CompanyName)
+	tenantExist := db.Where("company_name = ? OR domain = ?", CompanyName, parts[1]).First(&tenant)
+
 	fmt.Println(tenantExist)
 
 	if tenantExist.RowsAffected > 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "Tenant already exists"})
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Organization already exists"})
 		return
 	}
 
 	memberExist := db.First(&models.Member{Email: createTenantInput.Email})
 
 	if memberExist.RowsAffected > 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "Member already exists"})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Member already exists"})
 		return
 	}
 
@@ -131,7 +153,7 @@ func SignUp(c *gin.Context, db *gorm.DB) {
 
 	fmt.Println(createdTenant)
 	if createdTenant.Error != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": createdTenant.Error.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": createdTenant.Error.Error()})
 		return
 	}
 
@@ -149,10 +171,6 @@ func SignUp(c *gin.Context, db *gorm.DB) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": createdMember.Error.Error()})
 		return
 	}
-
-	parts := strings.Split(createTenantInput.Email, "@")
-
-	allowedDomains := []string{parts[1]}
 
 	createOrgParams := &organizations.CreateParams{
 		OrganizationName:     tenant.CompanyName,
@@ -189,7 +207,7 @@ func SignUp(c *gin.Context, db *gorm.DB) {
 			OrganizationID: stytchOrganization.Organization.OrganizationID,
 		}
 		client.Organizations.Delete(context.Background(), deleteParams)
-		c.JSON(http.StatusBadRequest, gin.H{"message": createOrgError.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": createOrgError.Error()})
 	}
 
 	client.Organizations.Members.Create(context.Background(), createMemberParams)
@@ -209,6 +227,8 @@ func SignUp(c *gin.Context, db *gorm.DB) {
 			OrganizationID: stytchOrganization.Organization.OrganizationID,
 		}
 		client.Organizations.Delete(context.Background(), deleteParams)
+		c.JSON(http.StatusInternalServerError, gin.H{"message": createConnError.Error()})
+
 	}
 
 	tenantUpdates := map[string]interface{}{
@@ -223,20 +243,17 @@ func SignUp(c *gin.Context, db *gorm.DB) {
 	}
 
 	if err := db.Model(&tenant).Updates(tenantUpdates).Error; err != nil {
-		log.Fatalf("Failed to update tenant: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Something went wrong updating the organization"})
+
 	}
 
 	if err := db.Model(&member).Updates(memberUpdates).Error; err != nil {
-		log.Fatalf("Failed to update tenant: %v", err)
-	}
-
-	if err := db.First(&tenant, tenant.ID).Error; err != nil {
-		log.Fatalf("Failed to fetch updated tenant: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Something went wrong updating member details"})
 	}
 
 	c.JSON(http.StatusCreated, gin.H{
 		"status": "success",
-		"data":   gin.H{"tenant": tenant, "member": member},
+		"data":   gin.H{"message": "Sign Up Successful"},
 	})
 
 }
@@ -256,9 +273,9 @@ func UpdateSamlConnection(c *gin.Context, db *gorm.DB) {
 	result := db.First(&tenant, "id = ?", id)
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
-			utils.NotFound(c, "Tenant not found")
+			utils.NotFound(c, "Organization not found")
 		} else {
-			utils.InternalServerError(c, "Error retrieving tenant")
+			utils.InternalServerError(c, "Error retrieving organization")
 		}
 		return
 	}
@@ -296,7 +313,7 @@ func UpdateSamlConnection(c *gin.Context, db *gorm.DB) {
 	}
 
 	if err := db.Model(&tenant).Updates(tenantUpdates).Error; err != nil {
-		log.Fatalf("Failed to update tenant: %v", err)
+		utils.InternalServerError(c, "Something went wrong updating organization")
 	}
 
 	utils.OK(c, "SAML connection updated successfully")
@@ -311,27 +328,45 @@ func SignIn(c *gin.Context, db *gorm.DB) {
 		return
 	}
 
+	var tenant models.Tenant
 	var member models.Member
 
-	memberExist := db.Preload("Tenant").First(&member, "email = ?", signInInput.Email)
+	parts := strings.Split(signInInput.Email, "@")
 
-	if memberExist.Error != nil {
-		if memberExist.Error == gorm.ErrRecordNotFound {
-			utils.NotFound(c, "Member not found")
+	tenantExist := db.Where("domain = ?", parts[1]).First(&tenant)
+
+	memberExistError := db.Where("email = ?", signInInput.Email).First(&member).Error
+
+	if tenantExist.Error != nil {
+		if tenantExist.Error == gorm.ErrRecordNotFound {
+			utils.NotFound(c, "Organization not found")
 		} else {
-			utils.InternalServerError(c, "Error retrieving member")
+			utils.InternalServerError(c, "Error retrieving organization")
 		}
 		return
 	}
+
 	if signInInput.SignInMethod == "SAML" {
-		if member.Tenant.ID == 0 || member.Tenant.IdpIssuerUrl == "" {
+		if tenant.IdpIssuerUrl == "" {
 			utils.BadRequest(c, "This user does not have SAML provisioned")
 			return
 		}
-		utils.OK(c, gin.H{"connection_id": member.Tenant.ConnectionID})
+		utils.OK(c, gin.H{"connection_id": tenant.ConnectionID})
 		return
 	} else if signInInput.SignInMethod == "MagicLink" {
-		utils.OK(c, gin.H{"organization_id": member.Tenant.StytchOrganizationId})
+
+		if memberExistError == nil {
+			utils.OK(c, gin.H{"organization_id": tenant.StytchOrganizationId})
+		}
+
+		if memberExistError != nil && tenant.IdpIssuerUrl != "" {
+			utils.BadRequest(c, "This organization has SAML provisioned, please sign in with saml")
+		}
+
+		if memberExistError != nil && tenant.IdpIssuerUrl == "" {
+
+			utils.BadRequest(c, "Member does not exist")
+		}
 
 	} else {
 		utils.BadRequest(c, "Invalid sign in method")

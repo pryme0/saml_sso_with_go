@@ -18,7 +18,7 @@ export const Profile = () => {
           />
         </div>
         <p className="flex gap-8 ">
-          <strong>Name</strong> {member?.name}
+          <strong>Name</strong> {member?.first_name} {" "}  {member?.last_name}
         </p>
         <p className="flex gap-8">
           <strong>Email</strong> {member?.email}
