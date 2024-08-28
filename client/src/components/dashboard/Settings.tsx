@@ -2,11 +2,12 @@ import React from "react";
 
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import { RootState } from "../../store/reducers";
 import { axiosInstance } from "../../utils";
 import Spinner from "../common/Spinner";
+import { IoSettings } from "react-icons/io5";
 
 interface SAMLFormInputs {
   idp_issuer_url: string;
@@ -16,8 +17,9 @@ interface SAMLFormInputs {
 
 export const Settings = () => {
   const [loading, setLoading] = useState(false);
+  const [creatingConnection, setCreatingConnection] = useState(false);
 
-  const [showSAMLForm, setShowSAMLForm] = useState(false);
+  const dispatch = useDispatch();
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -27,7 +29,30 @@ export const Settings = () => {
     });
   };
 
-  const tenant = useSelector((state: RootState) => state.tenantReducer.tenant);
+  const organization = useSelector(
+    (state: RootState) => state.organizationReducer.organization
+  );
+
+  const createSamlConnection = async () => {
+    setCreatingConnection(true);
+    try {
+      const { data } = await axiosInstance.post(
+        `/createSAMLConnection/${organization.stytch_organization_id}`
+      );
+      dispatch({
+        type: "SET_ORGANIZATION",
+        payload: { ...organization, ...data.data.connection },
+      });
+      setCreatingConnection(false);
+    } catch (error: any) {
+      setCreatingConnection(false);
+      toast.error(error?.response?.data?.message || "Something went wrong", {
+        position: "top-right",
+        autoClose: 3000,
+      });
+    }
+  };
+
   const {
     register,
     handleSubmit,
@@ -35,8 +60,8 @@ export const Settings = () => {
     reset,
   } = useForm<SAMLFormInputs>({
     defaultValues: {
-      idp_sign_on_url: tenant?.idp_sign_on_url || "",
-      idp_issuer_url: tenant?.idp_issuer_url || "",
+      idp_sign_on_url: organization?.idp_sign_on_url || "",
+      idp_issuer_url: organization?.idp_issuer_url || "",
     },
   });
 
@@ -44,11 +69,10 @@ export const Settings = () => {
     try {
       setLoading(true);
       await axiosInstance.put(
-        `/tenants/update/saml-connection/${tenant.ID}`,
+        `/tenants/update/saml-connection/${organization.ID}`,
         data
       );
       setLoading(false);
-      setShowSAMLForm(false);
       reset();
       toast.success("SAML Configuration updated successfully!", {
         position: "top-right",
@@ -71,20 +95,26 @@ export const Settings = () => {
 
   return (
     <div className="flex  flex-col w-full ">
-      <h1 className="text-3xl font-bold mb-6">
-        {showSAMLForm ? "SAML Configuration" : "Settings"}{" "}
-      </h1>
-      <div className="bg-white p-6 shadow-md rounded-lg">
-        {!showSAMLForm && (
-          <button
-            onClick={() => setShowSAMLForm(!showSAMLForm)}
-            className="flex font-bold justify-center w-full bg-[#13e5c0] text-white py-2 px-4 rounded-md shadow-sm hover:bg-[#19303d] focus:outline-none focus:ring-2  focus:ring-offset-2"
-          >
-            Configure Saml
-          </button>
+      <h1 className="text-3xl font-bold mb-6">Settings</h1>
+      <div className="bg-white p-6 shadow-md rounded-lg h-full">
+        {!organization.connection_id && (
+          <div className="h-full flex-col items-center  flex font-bold justify-center w-full text-white py-2 rounded-md ">
+            <IoSettings color="#13e5c0" size={200} />
+            <button
+              onClick={createSamlConnection}
+              type="submit"
+              className="flex mb-5 mt-5 font-bold justify-center w-md text-white py-2 px-4 rounded-md shadow-sm bg-[#19303d] focus:outline-none "
+            >
+              {creatingConnection ? (
+                <Spinner className={"text-[#fff]"} />
+              ) : (
+                "Create SAML Connection"
+              )}
+            </button>
+          </div>
         )}
 
-        {showSAMLForm && (
+        {organization.connection_id && (
           <div className="mt-2">
             <div className="mt-1 mb-[100px]">
               <h2 className="text-xl font-semibold mb-4">
@@ -99,11 +129,11 @@ export const Settings = () => {
                 <div
                   className="mt-1 block w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm cursor-pointer"
                   onClick={() =>
-                    copyToClipboard(tenant && tenant.stytch_acs_url)
+                    copyToClipboard(organization && organization.stytch_acs_url)
                   }
                   title="Click to copy"
                 >
-                  {tenant.stytch_acs_url}
+                  {organization.stytch_acs_url}
                 </div>
               </div>
 
@@ -114,10 +144,12 @@ export const Settings = () => {
                 </label>
                 <div
                   className="mt-1 block w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm cursor-pointer"
-                  onClick={() => copyToClipboard(tenant.stytch_audience_url)}
+                  onClick={() =>
+                    copyToClipboard(organization.stytch_audience_url)
+                  }
                   title="Click to copy"
                 >
-                  {tenant.stytch_audience_url}
+                  {organization.stytch_audience_url}
                 </div>
               </div>
             </div>
@@ -208,13 +240,6 @@ export const Settings = () => {
                 className="flex mb-5 font-bold justify-center w-full text-white py-2 px-4 rounded-md shadow-sm bg-[#19303d] focus:outline-none focus:ring-2  focus:ring-offset-2"
               >
                 {loading ? <Spinner /> : "Update SAML configuration"}
-              </button>
-
-              <button
-                onClick={() => setShowSAMLForm(!showSAMLForm)}
-                className="flex font-bold justify-center w-full bg-[#13e5c0] text-white py-2 px-4 rounded-md shadow-sm hover:bg-[#19303d] focus:outline-none focus:ring-2  focus:ring-offset-2"
-              >
-                {showSAMLForm ? "Cancel" : "Configure Saml"}
               </button>
             </form>
           </div>

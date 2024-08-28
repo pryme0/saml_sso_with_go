@@ -34,9 +34,8 @@ export const Dashboard: React.FC = () => {
           ),
         },
       });
-
       dispatch({
-        type: "SET_TENANT",
+        type: "SET_ORGANIZATION",
         payload: response.data.data.member.tenant,
       });
     } catch (error) {

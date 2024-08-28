@@ -1,4 +1,4 @@
-export interface TenantInterface {
+export interface OrganizationInterface {
   ID: number | null;
   CreatedAt: string;
   UpdatedAt: string;
@@ -11,4 +11,5 @@ export interface TenantInterface {
   stytch_acs_url: string;
   stytch_issuer_url: string;
   company_name: string;
+  samlConfigured?: boolean;
 }

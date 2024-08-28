@@ -1,5 +1,4 @@
 export const excludedProviders = [
-  "gmail.com",
   "aol.com",
   "yahoo.com",
   "icloud.com",

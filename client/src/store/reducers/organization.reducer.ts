@@ -1,8 +1,8 @@
-import { SET_TENANT, SetTenantAction } from "../actions";
-import { TenantInterface } from "../interface";
+import { SET_ORGANIZATION, SetOrganizationAction } from "../actions";
+import { OrganizationInterface } from "../interface";
 
-const initialState: { tenant: TenantInterface } = {
-  tenant: {
+const initialState: { organization: OrganizationInterface } = {
+  organization: {
     ID: null,
     CreatedAt: "",
     UpdatedAt: "",
@@ -18,15 +18,15 @@ const initialState: { tenant: TenantInterface } = {
   },
 };
 
-export const tenantReducer = (
+export const organizationReducer = (
   state = initialState,
-  action: SetTenantAction
+  action: SetOrganizationAction
 ) => {
   switch (action.type) {
-    case SET_TENANT:
+    case SET_ORGANIZATION:
       return {
         ...state,
-        tenant: action.payload,
+        organization: action.payload,
       };
     default:
       return state;

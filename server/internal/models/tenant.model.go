@@ -10,6 +10,8 @@ type Tenant struct {
 	IdpIssuerUrl         string   `json:"idp_issuer_url"`
 	StytchAudienceUrl    string   `json:"stytch_audience_url"`
 	StytchAcsUrl         string   `json:"stytch_acs_url"`
+	Domain               string   `json:"domain"`
 	CompanyName          string   `json:"company_name"`
 	Members              []Member `gorm:"foreignKey:TenantID" json:"members"`
+	SamlConfigured       bool     `json:"saml_configured"`
 }

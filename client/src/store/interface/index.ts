@@ -1,3 +1,3 @@
 export * from "./member.interface";
-export * from "./tenant.interface";
+export * from "./organization.interface";
 export * from "./dashboard.interface";
