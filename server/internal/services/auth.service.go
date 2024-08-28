@@ -210,7 +210,7 @@ func SignUp(c *gin.Context, db *gorm.DB) {
 	memberExist := db.Where("email = ?", createTenantInput.Email).First(&member)
 
 	if memberExist.RowsAffected > 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "Member already exists"})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Member already exists"})
 		return
 	}
 
@@ -346,6 +346,7 @@ func SignIn(c *gin.Context, db *gorm.DB) {
 		}
 		return
 	}
+
 	if signInInput.SignInMethod == "SAML" {
 		if tenant.IdpIssuerUrl == "" {
 			utils.BadRequest(c, "This user does not have SAML provisioned")

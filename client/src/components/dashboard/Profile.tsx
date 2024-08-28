@@ -147,6 +147,18 @@ export const Profile = () => {
             </div>
           </div>
         </div>
+<<<<<<< HEAD
+=======
+        <p className="flex gap-8 ">
+          <strong>Name</strong> {member?.first_name} {" "}  {member?.last_name}
+        </p>
+        <p className="flex gap-8">
+          <strong>Email</strong> {member?.email}
+        </p>
+        <p className="flex gap-8">
+          <strong>Role</strong> {member?.roles.map((role) => role)}
+        </p>
+>>>>>>> 14635bf5febf3fc2cf5e0bc939c84369fc38c573
       </div>
     </div>
   );
