@@ -1,14 +1,13 @@
 import React from "react";
-import { useSelector } from "react-redux";
-import { RootState } from "../../store/reducers";
+
+import { useStytchMember, useStytchOrganization } from "@stytch/react/b2b";
 
 export const Profile = () => {
-  const { member, organization } = useSelector((state: RootState) => {
-    return {
-      member: state.memberReducer.member,
-      organization: state.organizationReducer.organization,
-    };
-  });
+  const { member } = useStytchMember();
+  const { organization } = useStytchOrganization();
+
+  console.log({ roles: member?.roles });
+
   return (
     <div className="flex flex-col w-full">
       <h1 className="text-3xl font-bold mb-6">Profile</h1>
@@ -22,10 +21,11 @@ export const Profile = () => {
           />
           <div>
             <p className="flex gap-8 ">
-              <strong>Name</strong> {member?.first_name} {member?.last_name}
+              <strong>Name</strong> {member?.name.split(" ")[0]}{" "}
+              {member?.name.split(" ")[1]}
             </p>
             <p className="flex gap-8">
-              <strong>Email</strong> {member?.email}
+              <strong>Email</strong> {member?.email_address}
             </p>
           </div>
         </div>
@@ -49,14 +49,14 @@ export const Profile = () => {
                 <strong>First Name</strong>
               </p>
 
-              <p className="flex gap-8">{member?.first_name}</p>
+              <p className="flex gap-8">{member?.name.split(" ")[0]}</p>
             </div>
             <div>
               <p className="flex gap-8">
                 <strong>Last Name</strong>
               </p>
 
-              <p className="flex gap-8">{member?.last_name}</p>
+              <p className="flex gap-8">{member?.name.split(" ")[1]}</p>
             </div>
           </div>
           <div className="rounded-md px-5 flex items-center  h-20  bg-gray-100">
@@ -65,7 +65,7 @@ export const Profile = () => {
                 <strong>Email Address</strong>
               </p>
 
-              <p className="flex gap-8">{member?.email}</p>
+              <p className="flex gap-8">{member?.email_address}</p>
             </div>
             <div>
               <p className="flex gap-8">
@@ -82,10 +82,9 @@ export const Profile = () => {
               </p>
 
               <p className="flex gap-8">
-                {member &&
-                  member?.roles?.map((role) => {
-                    return `  ${role}   ,`;
-                  })}
+                {member?.roles?.map((role) => {
+                  return `  ${role.role_id}   ,`;
+                })}
               </p>
             </div>
             <div>
@@ -94,7 +93,7 @@ export const Profile = () => {
               </p>
 
               <p className="flex gap-8">
-                {organization && organization?.samlConfigured
+                {organization && organization?.sso_active_connections
                   ? "True"
                   : "False"}
               </p>
@@ -147,18 +146,6 @@ export const Profile = () => {
             </div>
           </div>
         </div>
-<<<<<<< HEAD
-=======
-        <p className="flex gap-8 ">
-          <strong>Name</strong> {member?.first_name} {" "}  {member?.last_name}
-        </p>
-        <p className="flex gap-8">
-          <strong>Email</strong> {member?.email}
-        </p>
-        <p className="flex gap-8">
-          <strong>Role</strong> {member?.roles.map((role) => role)}
-        </p>
->>>>>>> 14635bf5febf3fc2cf5e0bc939c84369fc38c573
       </div>
     </div>
   );

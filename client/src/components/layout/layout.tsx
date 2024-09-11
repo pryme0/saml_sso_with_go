@@ -2,8 +2,7 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { FaBars } from "react-icons/fa";
 import { useStytchMemberSession, useStytchB2BClient } from "@stytch/react/b2b";
-import { useDispatch, useSelector } from "react-redux";
-import { RootState } from "../../store/reducers";
+
 import { useLocation } from "react-router-dom";
 interface LayoutProps {
   children: React.ReactNode;
@@ -11,11 +10,8 @@ interface LayoutProps {
 
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const dispatch = useDispatch();
   const { session } = useStytchMemberSession();
-  const activeSection = useSelector(
-    (state: RootState) => state.dashboardReducer.activeSection
-  );
+
   const location = useLocation();
 
   const stytchB2BClient = useStytchB2BClient();
@@ -28,12 +24,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     }
   };
 
-  const toggleActiveScreen = (screen: string) => {
-    dispatch({
-      type: "SET_DASHBOARD_INTERFACE",
-      payload: { activeSection: screen },
-    });
-  };
   return (
     <div style={{ maxWidth: "100%" }} className=" flex flex-col min-h-screen">
       {/* Header */}
@@ -80,17 +70,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         >
           {session ? (
             <>
-              <p
-                onClick={() =>
-                  toggleActiveScreen(
-                    activeSection === "Profile" ? "Settings" : "Profile"
-                  )
-                }
-                className="flex space-x-4 font-bold cursor-pointer"
-              >
-                {activeSection === "Profile" ? "Settings" : "Profile"}
-              </p>
-
               <p
                 onClick={handleLogout}
                 className="flex space-x-4 font-bold cursor-pointer"

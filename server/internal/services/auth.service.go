@@ -41,6 +41,7 @@ func init() {
 	if err != nil {
 		panic(fmt.Sprintf("Failed to initialize Stytch client: %v", err))
 	}
+
 	stytchClient = client
 }
 
