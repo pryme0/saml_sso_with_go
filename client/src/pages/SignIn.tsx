@@ -1,6 +1,4 @@
 import React, { useState } from "react";
-import { useStytchB2BClient } from "@stytch/react/b2b";
-import { toast } from "react-toastify";
 import {
   B2BProducts,
   AuthFlowType,
@@ -17,54 +15,20 @@ export const SignInPage: React.FC = () => {
   const [signInType, setSignInType] = useState<SignInTypeEnum>(
     SignInTypeEnum.MagicLink
   );
-  const stytch = useStytchB2BClient();
-
-  const config: StytchB2BUIConfig = {
-    authFlowType: AuthFlowType.Organization,
-    products: [B2BProducts.sso],
-    sessionOptions: { sessionDurationMinutes: 240 },
-    emailMagicLinksOptions: {
-      loginRedirectURL: "http://localhost:3000/authenticate",
-      signupRedirectURL: "http://localhost:3000/authenticate",
-    },
-    ssoOptions: {
-      loginRedirectURL: "http://localhost:3000/authenticate",
-      signupRedirectURL: "http://localhost:3000/authenticate",
-    },
-  };
+  const [companySlug, setCompanySlug] = useState("");
 
   const discoveryConfig: StytchB2BUIConfig = {
     authFlowType: AuthFlowType.Discovery,
-    products: [B2BProducts.emailMagicLinks],
+    products: [B2BProducts.emailMagicLinks, B2BProducts.sso],
     sessionOptions: { sessionDurationMinutes: 240 },
     emailMagicLinksOptions: {
-      loginRedirectURL: "http://localhost:3000/authenticate",
-      signupRedirectURL: "http://localhost:3000/authenticate",
+      loginRedirectURL: "http://loaclhost:3002/authenticate",
+      signupRedirectURL: "http://loaclhost:3002/authenticate",
     },
     ssoOptions: {
-      loginRedirectURL: "http://localhost:3000/authenticate",
-      signupRedirectURL: "http://localhost:3000/authenticate",
+      loginRedirectURL: "http://loaclhost:3002/authenticate",
+      signupRedirectURL: "http://loaclhost:3002/authenticate",
     },
-  };
-
-  const handleSAMLSignIn = async (connection_id: string) => {
-    try {
-      stytch.sso.start({
-        connection_id: `${connection_id}`,
-        login_redirect_url: "http://localhost:3000/authenticate",
-        signup_redirect_url: "http://localhost:3000/authenticate",
-      });
-      //eslint-disable-next-line
-    } catch (error: any) {
-      toast.error(
-        error.message ||
-          "An error occurred while trying to sign in, please try again",
-        {
-          position: "top-right",
-          autoClose: 3000, // Close after 3 seconds
-        }
-      );
-    }
   };
 
   const toggleFormType = (type: SignInTypeEnum) => {
@@ -78,7 +42,25 @@ export const SignInPage: React.FC = () => {
           <StytchB2B config={discoveryConfig} />
         </div>
       ) : (
-        <StytchB2B config={config} />
+        <div className="flex flex-col items-center w-[400px] max-w-md">
+          <input
+            type="text"
+            required={true}
+            placeholder="Input company slug "
+            onChange={(e) => setCompanySlug(e.target.value)}
+            className={`h-[50px] w-[350px] px-4 py-2 mb-5 border rounded-md shadow-sm focus:outline-none transition duration-300 ease-in-out`}
+          />
+
+          <button
+            type="submit"
+            onClick={() => {
+              window.location.href = `http://localhost:3000/${companySlug}`;
+            }}
+            className={`flex font-bold justify-center w-[350px] bg-[#19303d] text-white py-2 px-4 rounded-md shadow-sm  focus:outline-none focus:ring-2  focus:ring-offset-2`}
+          >
+            Sign in with SAML
+          </button>
+        </div>
       )}
 
       <div className="flex items-center justify-center my-4">

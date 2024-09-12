@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   AuthFlowType,
   B2BProducts,
@@ -6,6 +6,10 @@ import {
   StytchEventType,
 } from "@stytch/vanilla-js/dist/b2b";
 import { StytchB2B } from "@stytch/react/b2b";
+import { axiosInstance } from "../utils";
+import { useLocation } from "react-router-dom";
+import { LuLoader2 } from "react-icons/lu";
+import Cookies from "js-cookie";
 
 export const Authenticate = () => {
   const config: StytchB2BUIConfig = {
@@ -13,6 +17,38 @@ export const Authenticate = () => {
     sessionOptions: { sessionDurationMinutes: 60 },
     authFlowType: AuthFlowType.Discovery,
   };
+
+  const [tokenType, setTokenType] = useState("");
+
+  const location = useLocation();
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const token = searchParams.get("token");
+    const tokenType: any = searchParams.get("stytch_token_type");
+
+    setTokenType(tokenType);
+
+    if (tokenType === "sso") {
+      axiosInstance
+        .get(`/authenticate?token=${token}`)
+        .then((data) => {
+          Cookies.set("stytch_session_jwt", data.data.data.SessionJWT, {
+            secure: true,
+            sameSite: "Strict",
+          });
+          Cookies.set("stytch_session", data.data.data.SessionToken, {
+            secure: true,
+            sameSite: "Strict",
+          });
+
+          window.location.href = "http://localhost:3000/dashboard";
+        })
+        .catch((error) => {
+          console.log({ error });
+        });
+    }
+  }, [location.search]);
 
   const styles = {
     container: {
@@ -57,31 +93,39 @@ export const Authenticate = () => {
 
   return (
     <div className="flex justify-center w-full items-center">
-      <StytchB2B
-        styles={styles}
-        config={config}
-        callbacks={{
-          onEvent: async ({
-            type,
-            data,
-          }: {
-            type: StytchEventType;
-            data: any;
-          }) => {
-            if (
-              type ===
-                StytchEventType.B2BDiscoveryIntermediateSessionExchange ||
-              type === StytchEventType.B2BDiscoveryOrganizationsCreate ||
-              type === StytchEventType.B2BMagicLinkDiscoveryAuthenticate ||
-              type === StytchEventType.B2BSSOAuthenticate
-            ) {
-              if (data && data.member) {
-                window.location.href = "http://localhost:3000/dashboard";
+      {tokenType === "discovery" && (
+        <StytchB2B
+          styles={styles}
+          config={config}
+          callbacks={{
+            onEvent: async ({
+              type,
+              data,
+            }: {
+              type: StytchEventType;
+              data: any;
+            }) => {
+              if (
+                type ===
+                  StytchEventType.B2BDiscoveryIntermediateSessionExchange ||
+                type === StytchEventType.B2BDiscoveryOrganizationsCreate ||
+                type === StytchEventType.B2BMagicLinkDiscoveryAuthenticate ||
+                type === StytchEventType.B2BSSOAuthenticate
+              ) {
+                if (data && data.member) {
+                  window.location.href = "http://localhost:3000/dashboard";
+                }
               }
-            }
-          },
-        }}
-      />
+            },
+          }}
+        />
+      )}
+
+      {tokenType === "sso" && (
+        <>
+          <LuLoader2 size={50} />
+        </>
+      )}
     </div>
   );
 };

@@ -7,7 +7,7 @@ import { Layout } from "./components";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { StytchB2BProvider } from "@stytch/react/b2b";
 
-import { Dashboard, Authenticate, SignInPage } from "./pages";
+import { Dashboard, Authenticate, SignInPage, SAMLSignInPage } from "./pages";
 import { StytchB2BUIClient } from "@stytch/vanilla-js/b2b";
 
 function App() {
@@ -21,6 +21,7 @@ function App() {
           <ToastContainer />
           <Routes>
             <Route path="/" element={<SignInPage />} />
+            <Route path="/:slug" element={<SAMLSignInPage />} />
             <Route path="/authenticate" element={<Authenticate />} />
             <Route path="/dashboard" element={<Dashboard />} />
           </Routes>
